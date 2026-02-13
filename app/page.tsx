@@ -120,12 +120,28 @@ export default function Home() {
     document.body.classList.toggle('light-theme', !isDarkTheme);
   }, [isDarkTheme]);
 
-  // Initialize audio
+  // Initialize audio and auto-play
   useEffect(() => {
     const audio = new Audio('/music.mp3');
     audio.loop = true;
     audio.volume = 0.3;
     setAudioElement(audio);
+
+    // Try to auto-play music
+    const playPromise = audio.play();
+    
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          // Auto-play started successfully
+          setIsMusicPlaying(true);
+        })
+        .catch((error) => {
+          // Auto-play was prevented by browser
+          console.log('Auto-play prevented. User interaction required.');
+          setIsMusicPlaying(false);
+        });
+    }
 
     return () => {
       audio.pause();
