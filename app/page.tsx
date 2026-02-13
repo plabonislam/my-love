@@ -120,16 +120,55 @@ export default function Home() {
     document.body.classList.toggle('light-theme', !isDarkTheme);
   }, [isDarkTheme]);
 
-  // Initialize audio
+  // Initialize audio and auto-play
   useEffect(() => {
     const audio = new Audio('/music.mp3');
     audio.loop = true;
     audio.volume = 0.3;
     setAudioElement(audio);
 
+    // Try to auto-play music immediately
+    const attemptAutoPlay = async () => {
+      try {
+        await audio.play();
+        setIsMusicPlaying(true);
+      } catch (error) {
+        // Auto-play was prevented, try again after user interaction
+        setIsMusicPlaying(false);
+        
+        // Enable autoplay on first user interaction
+        const enableOnInteraction = () => {
+          audio.play()
+            .then(() => {
+              setIsMusicPlaying(true);
+            })
+            .catch(() => {
+              // Still blocked, user will need to click
+            });
+          
+          // Remove listeners after first interaction
+          document.removeEventListener('click', enableOnInteraction);
+          document.removeEventListener('touchstart', enableOnInteraction);
+          document.removeEventListener('keydown', enableOnInteraction);
+        };
+        
+        document.addEventListener('click', enableOnInteraction, { once: true });
+        document.addEventListener('touchstart', enableOnInteraction, { once: true });
+        document.addEventListener('keydown', enableOnInteraction, { once: true });
+      }
+    };
+
+    // Small delay to ensure audio is ready
+    setTimeout(() => {
+      attemptAutoPlay();
+    }, 100);
+
     return () => {
       audio.pause();
       audio.src = '';
+      document.removeEventListener('click', () => {});
+      document.removeEventListener('touchstart', () => {});
+      document.removeEventListener('keydown', () => {});
     };
   }, []);
 
